@@ -1,10 +1,14 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
-    kotlin("plugin.serialization") version "2.4.20"
+    alias(libs.plugins.kotlin.serialization)
+    id("com.google.devtools.ksp")
+    id("com.google.dagger.hilt.android")
 }
 
 android {
+    buildFeatures { compose = true }
+
     namespace = "com.hardware.scanner.app"
     compileSdk {
         version = release(37)
@@ -22,61 +26,77 @@ android {
 
     buildTypes {
         release {
-            optimization {
-                enable = false
-            }
+            isMinifyEnabled = false
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
-    buildFeatures {
-        compose = true
-    }
+    buildFeatures { compose = true }
 }
 
-dependencies {
-    implementation("io.insert-koin:koin-android:4.2.2")
-    implementation("io.insert-koin:koin-androidx-compose:4.2.2")
+kotlin { jvmToolchain(21) }
 
-    // Compose
-    implementation(libs.androidx.activity.compose)
-    implementation("androidx.compose.material3:material3:1.4.0")
+dependencies {
+    implementation(libs.androidx.compose.ui.text)
+    implementation(libs.androidx.lifecycle.viewmodel.savedstate)
+    implementation(platform(libs.androidx.compose.bom))
+
+    // Room
+    implementation(libs.room.runtime)
+    ksp(libs.room.compiler)
+    implementation(libs.room.ktx)
+    implementation(libs.room.testing)
+
+    // Android Tests
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    // Java/Kotlin Tests
+    testImplementation(libs.junit)
+
+    // Jetpack Compose
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    implementation(libs.androidx.compose.animation)
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
-
-    // Android
+    implementation(libs.androidx.compose.material)
+    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.common)
 
-    // Lifecycle
+    // navigation
+    implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.material3.adaptive.navigation.suite)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.hilt.android)
 
+    // Serialization
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.transport.runtime)
+    ksp(libs.hilt.android.compiler)
+    testImplementation(kotlin("test"))
+
+    // Camera
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
 
-
-    implementation("io.ktor:ktor-client-android:3.6.0")
-    implementation("io.ktor:ktor-client-logging:3.6.0")
-    implementation("io.ktor:ktor-client-content-negotiation:3.6.0")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:3.6.0")
-    implementation("org.slf4j:slf4j-android:1.7.36")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
-    implementation("androidx.compose.material:material-icons-extended:1.7.8")
-
-    // Testes
-    testImplementation(libs.junit)
-
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.androidx.junit)
-
-    // Debug
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
-    debugImplementation(libs.androidx.compose.ui.tooling)
+    // Ktor client
+    implementation(libs.ktor.client.android)
+    implementation(libs.ktor.client.logging)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.slf4j.android)
+    implementation(libs.androidx.material.icons.extended)
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
 }

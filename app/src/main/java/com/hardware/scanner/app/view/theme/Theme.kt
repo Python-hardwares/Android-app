@@ -1,6 +1,5 @@
-package com.hardware.scanner.app.ui.theme
+package com.hardware.scanner.app.view.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme

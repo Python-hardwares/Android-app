@@ -1,4 +1,4 @@
-package com.hardware.scanner.app.ui.theme
+package com.hardware.scanner.app.view.theme
 
 import androidx.compose.ui.graphics.Color
 
