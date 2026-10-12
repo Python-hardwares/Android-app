@@ -1,15 +1,50 @@
 package com.hardware.scanner.app
 
-import com.hardware.scanner.app.model.repositories.PhotoRepository
-import com.hardware.scanner.app.model.repositories.PhotoRepositoryImpl
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
+import com.hardware.scanner.app.model.repositories.ApiRepository
+import com.hardware.scanner.app.model.repositories.ApiRepositoryImpl
+import com.hardware.scanner.app.services.PhotoService
 import dagger.Module
 import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.defaultRequest
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.json.Json
+import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
+
   @Provides
-  fun provideAuthRepository(): PhotoRepository = PhotoRepositoryImpl()
+  @Singleton
+  fun provideJson(): Json = Json {
+    ignoreUnknownKeys = true
+    isLenient = true
+    encodeDefaults = true
+  }
+
+  @Provides
+  @Singleton
+  fun provideHttpClient(json: Json): HttpClient = HttpClient(OkHttp) {
+    install(ContentNegotiation) {
+      json(json)
+    }
+    defaultRequest {
+      contentType(ContentType.Application.Json)
+    }
+  }
+
+  @Provides
+  @Singleton
+  fun provideApiRepository(client: HttpClient): ApiRepository =
+    ApiRepositoryImpl(client)
+
+  @Provides
+  fun providePhotoService(): PhotoService = PhotoService()
 }

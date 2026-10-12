@@ -9,7 +9,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
-import com.hardware.scanner.app.navigation.Camera
+import com.hardware.scanner.app.navigation.Menu
 import com.hardware.scanner.app.navigation.cameraGraph
 
 val LocalBackNavigation = staticCompositionLocalOf<() -> Unit> {
@@ -27,6 +27,7 @@ fun App() {
   }
 }
 
+
 @Composable
 private fun AppNavHost(navController: NavHostController) {
   LaunchedEffect(navController) {
@@ -35,7 +36,7 @@ private fun AppNavHost(navController: NavHostController) {
     }
   }
 
-  NavHost(navController = navController, startDestination = Camera) {
+  NavHost(navController = navController, startDestination = Menu) {
     cameraGraph(navController)
   }
 }

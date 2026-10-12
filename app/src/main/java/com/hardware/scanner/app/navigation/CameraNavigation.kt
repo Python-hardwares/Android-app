@@ -3,23 +3,41 @@ package com.hardware.scanner.app.navigation
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
+import com.hardware.scanner.app.model.entity.Motherboard
 import com.hardware.scanner.app.view.screen.CameraScreen
-import com.hardware.scanner.app.view.screen.PreviewScreen
+import com.hardware.scanner.app.view.screen.MenuScreen
+import com.hardware.scanner.app.view.screen.MotherboardSpecsScreen
+import com.hardware.scanner.app.view.screen.toRoute
 import kotlinx.serialization.Serializable
 
 @Serializable
-object Camera
+internal data object Menu
 
 @Serializable
-object Preview
+internal data object Preview
+
+@Serializable
+internal data class MotherboardSpecs(val motherboard: Motherboard)
 
 fun NavGraphBuilder.cameraGraph(navController: NavController) {
-  composable<Camera> {
-    CameraScreen(onNavigateToPreview = { navController.navigate(Preview) })
+  composable<Menu> { backStackEntry ->
+    //TODO precisa arruma o envio do objeto para a tela
+    val motherboard = backStackEntry.toRoute<Motherboard>()
+
+    MenuScreen(
+      onNavigateToPreview = { navController.navigate(Preview) },
+      onNavigateToSpecs = { motherboard ->
+        navController.navigate(motherboard.toRoute())
+      }
+    )
   }
 
   composable<Preview> {
-    PreviewScreen(onBackScreen = { navController.navigate(Camera) })
+    CameraScreen(onBackScreen = { navController.popBackStack() })
   }
 
+  composable<MotherboardSpecs> {
+    MotherboardSpecsScreen(onBackScreen = { navController.popBackStack() })
+  }
 }
