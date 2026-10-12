@@ -44,11 +44,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.savedstate)
     implementation(platform(libs.androidx.compose.bom))
 
-    // Room
-    implementation(libs.room.runtime)
-    ksp(libs.room.compiler)
-    implementation(libs.room.ktx)
-    implementation(libs.room.testing)
+
 
     // Android Tests
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
@@ -91,6 +87,8 @@ dependencies {
     implementation(libs.androidx.camera.view)
 
     // Ktor client
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.okhttp)
     implementation(libs.ktor.client.android)
     implementation(libs.ktor.client.logging)
     implementation(libs.ktor.client.content.negotiation)
@@ -99,4 +97,7 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
+
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
 }
