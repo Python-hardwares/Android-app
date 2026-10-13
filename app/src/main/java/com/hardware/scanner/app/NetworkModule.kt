@@ -10,9 +10,7 @@ import dagger.hilt.components.SingletonComponent
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.defaultRequest
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import javax.inject.Singleton
@@ -32,11 +30,14 @@ object NetworkModule {
   @Provides
   @Singleton
   fun provideHttpClient(json: Json): HttpClient = HttpClient(OkHttp) {
+    install(HttpTimeout) {
+      requestTimeoutMillis = 120_000
+      connectTimeoutMillis = 10_000
+      socketTimeoutMillis = 120_000
+    }
+
     install(ContentNegotiation) {
       json(json)
-    }
-    defaultRequest {
-      contentType(ContentType.Application.Json)
     }
   }
 

@@ -1,10 +1,7 @@
 package com.hardware.scanner.app.services
 
 import android.os.Environment
-import android.util.Log
 import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageCaptureException
-import kotlinx.coroutines.flow.update
 import java.io.File
 
 class PhotoService {
@@ -16,22 +13,22 @@ class PhotoService {
       directory
     )
 
-    photoDir.mkdirs()
+    if (!photoDir.exists()) {
+      photoDir.mkdirs()
+    }
 
     return photoDir
   }
 
-  fun createOutputOptions(directoryPath: File): ImageCapture.OutputFileOptions {
-    val photoFile = File.createTempFile(
+  fun createPhotoFile(directoryPath: File): File {
+    return File.createTempFile(
       "hardware_scan_",
       ".jpg",
       directoryPath
     )
+  }
 
-    val outputOptions =
-      ImageCapture.OutputFileOptions.Builder(photoFile)
-        .build()
-
-    return outputOptions
+  fun createOutputOptions(photoFile: File): ImageCapture.OutputFileOptions {
+    return ImageCapture.OutputFileOptions.Builder(photoFile).build()
   }
 }

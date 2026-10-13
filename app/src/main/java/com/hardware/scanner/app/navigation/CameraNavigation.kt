@@ -27,7 +27,14 @@ fun NavGraphBuilder.cameraGraph(navController: NavController) {
   }
 
   composable<Preview> {
-    CameraScreen(onBackScreen = { navController.popBackStack() })
+    CameraScreen(
+      onBackScreen = { navController.popBackStack() },
+      onNavigateToSpecs = { motherboard ->
+        navController.navigate(motherboard.toRoute()) {
+          popUpTo<Preview> { inclusive = true }
+        }
+      }
+    )
   }
 
   composable<MotherboardSpecs> {

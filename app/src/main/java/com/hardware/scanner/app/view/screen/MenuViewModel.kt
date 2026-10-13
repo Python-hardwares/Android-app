@@ -40,6 +40,7 @@ data class MenuUiState(
 
 sealed interface MenuEvent {
   data class NavigateToSpecs(val motherboard: Motherboard) : MenuEvent
+  data class ShowError(val message: String) : MenuEvent
 }
 
 @HiltViewModel
@@ -51,6 +52,7 @@ class MenuViewModel @Inject constructor(
 
   private val _events = Channel<MenuEvent>(Channel.BUFFERED)
   val events = _events.receiveAsFlow()
+
   fun searchMotherboardByName(name: String) {
     if (name.isBlank() || _uiState.value.isLoading) return
     viewModelScope.launch {
@@ -64,21 +66,28 @@ class MenuViewModel @Inject constructor(
               "PreviewViewModel", "Nenhuma placa-mãe correspondente foi encontrada."
             )
             _uiState.update { it.copy(isLoading = false) }
+            _events.send(MenuEvent.ShowError("Nenhuma placa-mãe encontrada."))
           }
 
           ScanStatus.SUGGESTIONS -> {
             Log.i(
               "PreviewViewModel", "Foram encontradas sugestões de placas-mãe."
             )
-            _uiState.update { it.copy(isLoading = false, isListing = true, options = scan.matches) }
+            if (scan.matches.isEmpty()) {
+              _events.send(MenuEvent.ShowError("Nenhuma placa-mãe encontrada."))
+            }
+            _uiState.update { it.copy(isLoading = false, isListing = scan.matches.isNotEmpty(), options = scan.matches) }
           }
 
           ScanStatus.MATCHED -> {
             Log.i(
               "PreviewViewModel", "Placa-mãe correspondente encontrada com sucesso."
             )
-            scan.matches.firstOrNull()?.let {
-              _events.send(MenuEvent.NavigateToSpecs(it))
+            val first = scan.matches.firstOrNull()
+            if (first != null) {
+              _events.send(MenuEvent.NavigateToSpecs(first))
+            } else {
+              _events.send(MenuEvent.ShowError("Nenhuma placa-mãe encontrada."))
             }
             _uiState.update { it.copy(isLoading = false) }
           }
@@ -87,10 +96,10 @@ class MenuViewModel @Inject constructor(
         throw e
       } catch (e: Exception) {
         Log.e("CameraViewModel", "Erro ao buscar", e)
+        _events.send(MenuEvent.ShowError("Erro de conexão ao buscar placa-mãe."))
       } finally {
         _uiState.update { it.copy(isLoading = false) }
       }
     }
   }
-
 }
