@@ -1,11 +1,15 @@
 package com.hardware.scanner.app.view.screen
 
+import android.Manifest
+import android.content.pm.PackageManager
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -64,6 +68,27 @@ fun CameraScreen(
 
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val snackbarHostState = remember { SnackbarHostState() }
+  var hasCameraPermission by remember {
+    mutableStateOf(
+      ContextCompat.checkSelfPermission(
+        context,
+        Manifest.permission.CAMERA
+      ) == PackageManager.PERMISSION_GRANTED
+    )
+  }
+  var permissionDenied by remember { mutableStateOf(false) }
+  val cameraPermissionLauncher = rememberLauncherForActivityResult(
+    ActivityResultContracts.RequestPermission()
+  ) { granted ->
+    hasCameraPermission = granted
+    permissionDenied = !granted
+  }
+
+  LaunchedEffect(permissionDenied) {
+    if (permissionDenied) {
+      snackbarHostState.showSnackbar("A permissão da câmera é necessária para fazer a leitura.")
+    }
+  }
 
   var camera by remember { mutableStateOf<Camera?>(null) }
   var isTorchOn by remember { mutableStateOf(false) }
@@ -75,6 +100,10 @@ fun CameraScreen(
   }
 
   LaunchedEffect(Unit) {
+    if (!hasCameraPermission) {
+      cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+    }
+
     viewModel.events.collect { event ->
       when (event) {
         is CameraEvent.NavigateToSpecs -> {
@@ -100,31 +129,45 @@ fun CameraScreen(
         .padding(padding)
     ) {
       // Camera Preview
-      AndroidView(
-        modifier = Modifier.fillMaxSize(),
-        factory = { ctx ->
-          val previewView = PreviewView(ctx)
-          val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+      if (hasCameraPermission) {
+        AndroidView(
+          modifier = Modifier.fillMaxSize(),
+          factory = { ctx ->
+            val previewView = PreviewView(ctx)
+            val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
 
-          cameraProviderFuture.addListener({
-            val cameraProvider = cameraProviderFuture.get()
-            val preview = Preview.Builder().build()
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+            cameraProviderFuture.addListener({
+              val cameraProvider = cameraProviderFuture.get()
+              val preview = Preview.Builder().build()
+              val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
-            preview.surfaceProvider = previewView.surfaceProvider
+              preview.surfaceProvider = previewView.surfaceProvider
 
-            cameraProvider.unbindAll()
-            camera = cameraProvider.bindToLifecycle(
-              lifecycleOwner,
-              cameraSelector,
-              preview,
-              imageCapture
-            )
-          }, ContextCompat.getMainExecutor(ctx))
+              cameraProvider.unbindAll()
+              camera = cameraProvider.bindToLifecycle(
+                lifecycleOwner,
+                cameraSelector,
+                preview,
+                imageCapture
+              )
+            }, ContextCompat.getMainExecutor(ctx))
 
-          previewView
+            previewView
+          }
+        )
+      } else {
+        Box(
+          modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black),
+          contentAlignment = Alignment.Center
+        ) {
+          Text(
+            text = "Permissão da câmera necessária",
+            color = Color.White
+          )
         }
-      )
+      }
 
       // Top Header Overlay Guide
       Box(

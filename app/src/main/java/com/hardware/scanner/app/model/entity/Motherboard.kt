@@ -59,6 +59,12 @@ data class Motherboard(
   @SerialName("max_memory_oc_mhz")
   val maxMemoryOcMhz: Int? = null,
 
+  @SerialName("sata_slots")
+  val sataSlots: Int? = null,
+
+  @SerialName("pcie_slots")
+  val pcieSlots: Int? = null,
+
   val color: String? = null,
 
   @SerialName("color_source")

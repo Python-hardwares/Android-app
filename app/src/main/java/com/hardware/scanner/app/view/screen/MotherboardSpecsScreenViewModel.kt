@@ -36,6 +36,8 @@ data class MotherboardSpecs(
   val memoryChannels: Int = 0,
   val maxMemoryStandardMhz: Int = 0,
   val maxMemoryOcMhz: Int = 0,
+  val sataSlots: Int = 0,
+  val pcieSlots: Int = 0,
   val color: String,
   val colorSource: String = "",
   val chipset: String = ""
@@ -62,6 +64,8 @@ fun Motherboard.toRoute() = MotherboardSpecs(
   memoryChannels = memoryChannels ?: 0,
   maxMemoryStandardMhz = maxMemoryStandardMhz ?: 0,
   maxMemoryOcMhz = maxMemoryOcMhz ?: 0,
+  sataSlots = sataSlots ?: 0,
+  pcieSlots = pcieSlots ?: 0,
   color = color ?: "",
   colorSource = colorSource ?: "",
   chipset = chipset ?: ""
@@ -127,6 +131,8 @@ class MotherboardSpecsViewModel @Inject constructor(
       memoryChannels = route.memoryChannels.toString(),
       maxMemoryStandardMhz = route.maxMemoryStandardMhz,
       maxMemoryOcMhz = route.maxMemoryOcMhz,
+      sataSlots = route.sataSlots,
+      pcieSlots = route.pcieSlots,
       maxMemoryGb = route.maxMemoryGb,
       memorySlots = route.memorySlots,
       supportedCpus = getSampleCpus(route.socket),
