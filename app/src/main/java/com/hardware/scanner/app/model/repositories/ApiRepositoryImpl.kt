@@ -5,6 +5,7 @@ import com.hardware.scanner.app.model.entity.Scan
 import io.ktor.client.HttpClient
 import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.forms.formData
+import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
@@ -21,18 +22,24 @@ import java.io.File
 data class LookupRequest(val text: String)
 
 class ApiRepositoryImpl(
-  private val httpClient: HttpClient
+  private val httpClient: HttpClient,
+  private val serverConfigStore: ServerConfigStore
 ) : ApiRepository {
 
   private val responseJson = Json {
     ignoreUnknownKeys = true
   }
 
+  override suspend fun checkConnection(serverUrl: String): Boolean {
+    val response = httpClient.get(normalizeUrl(serverUrl))
+    return response.status.value in 200..499
+  }
+
   override suspend fun searchMotherboardByPhoto(file: File): Scan {
     try {
       Log.i("photoRepository", "UPLOAD: iniciando ${file.absolutePath}, existe=${file.exists()}, tamanho=${file.length()}")
 
-      val response: HttpResponse = httpClient.post("http://192.168.20.6:8000/scan") {
+      val response: HttpResponse = httpClient.post(serverUrl("scan")) {
         setBody(
           MultiPartFormDataContent(
             formData {
@@ -64,7 +71,7 @@ class ApiRepositoryImpl(
 
   override suspend fun searchMotherboardByName(name: String): Scan {
     try {
-      val response: HttpResponse = httpClient.post("http://192.168.20.6:8000/lookup") {
+      val response: HttpResponse = httpClient.post(serverUrl("lookup")) {
         contentType(ContentType.Application.Json)
         setBody(LookupRequest(text = name))
       }
@@ -75,6 +82,21 @@ class ApiRepositoryImpl(
     } catch (e: Exception) {
       Log.e("photoRepository", "LOOKUP ERRO: ${e.message}", e)
       throw e
+    }
+  }
+
+  private fun serverUrl(path: String): String {
+    val configuredUrl = serverConfigStore.getServerUrl()
+      ?: error("Servidor não configurado")
+    return "${normalizeUrl(configuredUrl)}/$path"
+  }
+
+  private fun normalizeUrl(url: String): String {
+    val trimmedUrl = url.trim().removeSuffix("/")
+    return if (trimmedUrl.startsWith("http://") || trimmedUrl.startsWith("https://")) {
+      trimmedUrl
+    } else {
+      "http://$trimmedUrl"
     }
   }
 }

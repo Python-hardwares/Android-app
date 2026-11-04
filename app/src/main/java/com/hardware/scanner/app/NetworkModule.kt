@@ -2,6 +2,7 @@ package com.hardware.scanner.app
 
 import com.hardware.scanner.app.model.repositories.ApiRepository
 import com.hardware.scanner.app.model.repositories.ApiRepositoryImpl
+import com.hardware.scanner.app.model.repositories.ServerConfigStore
 import com.hardware.scanner.app.services.PhotoService
 import dagger.Module
 import dagger.Provides
@@ -43,8 +44,10 @@ object NetworkModule {
 
   @Provides
   @Singleton
-  fun provideApiRepository(client: HttpClient): ApiRepository =
-    ApiRepositoryImpl(client)
+  fun provideApiRepository(
+    client: HttpClient,
+    serverConfigStore: ServerConfigStore
+  ): ApiRepository = ApiRepositoryImpl(client, serverConfigStore)
 
   @Provides
   fun providePhotoService(): PhotoService = PhotoService()

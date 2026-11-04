@@ -5,12 +5,17 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.hardware.scanner.app.navigation.Menu
 import com.hardware.scanner.app.navigation.cameraGraph
+import com.hardware.scanner.app.view.screen.ServerConnectionScreen
+import com.hardware.scanner.app.view.screen.ServerConnectionViewModel
 
 val LocalBackNavigation = staticCompositionLocalOf<() -> Unit> {
   error("No Back Navigation provided")
@@ -19,10 +24,16 @@ val LocalBackNavigation = staticCompositionLocalOf<() -> Unit> {
 @Composable
 fun App() {
   val navController = rememberNavController()
+  val connectionViewModel: ServerConnectionViewModel = hiltViewModel()
+  val connectionState by connectionViewModel.uiState.collectAsStateWithLifecycle()
 
   CompositionLocalProvider(LocalBackNavigation provides { navController.popBackStack() }) {
     Surface {
-      AppNavHost(navController)
+      if (connectionState.connected) {
+        AppNavHost(navController)
+      } else {
+        ServerConnectionScreen(viewModel = connectionViewModel)
+      }
     }
   }
 }

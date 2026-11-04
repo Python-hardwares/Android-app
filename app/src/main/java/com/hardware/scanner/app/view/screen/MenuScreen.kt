@@ -52,7 +52,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -61,10 +60,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.hardware.scanner.app.model.entity.Motherboard
-
-private val DarkButton = Color(0xFF1C1B1F)
-private val CardBackground = Color(0xFFF1F1F4)
-private val PrimaryAccent = Color(0xFF1E6FD9)
 
 @Composable
 fun MenuScreen(
@@ -161,20 +156,20 @@ fun MenuScreen(
                 text = "ESCANEAR COM A CÂMERA",
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = MaterialTheme.colorScheme.onPrimary
               )
               Spacer(modifier = Modifier.height(4.dp))
               Text(
                 text = "Escanear Placa-Mãe",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = MaterialTheme.colorScheme.onPrimary
               )
               Spacer(modifier = Modifier.height(4.dp))
               Text(
                 text = "Tire foto para identificar o modelo automaticamente",
                 fontSize = 12.sp,
-                color = Color.White
+                color = MaterialTheme.colorScheme.onPrimary
               )
             }
 
@@ -184,13 +179,13 @@ fun MenuScreen(
               modifier = Modifier
                 .size(48.dp)
                 .clip(CircleShape)
-                .background(Color.White.copy(alpha = 0.15f)),
+                .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f)),
               contentAlignment = Alignment.Center
             ) {
               Icon(
                 imageVector = Icons.Default.CameraAlt,
                 contentDescription = "Câmera",
-                tint = Color.White,
+                tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(24.dp)
               )
             }
@@ -326,7 +321,7 @@ fun MenuScreen(
         Box(
           modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.5f))
+            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f))
             .clickable(enabled = false) {},
           contentAlignment = Alignment.Center
         ) {
@@ -338,7 +333,7 @@ fun MenuScreen(
               modifier = Modifier.padding(24.dp),
               horizontalAlignment = Alignment.CenterHorizontally
             ) {
-              CircularProgressIndicator(color = DarkButton)
+              CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
               Spacer(modifier = Modifier.height(12.dp))
               Text(
                 text = "Buscando placa-mãe...",
@@ -379,7 +374,7 @@ private fun MotherboardItemCard(
           modifier = Modifier
             .size(56.dp)
             .clip(RoundedCornerShape(10.dp))
-            .background(MaterialTheme.colorScheme.surface)
+            .background(MaterialTheme.colorScheme.surface),
         )
         Spacer(modifier = Modifier.width(12.dp))
       } else {
@@ -387,7 +382,7 @@ private fun MotherboardItemCard(
           modifier = Modifier
             .size(56.dp)
             .clip(RoundedCornerShape(10.dp))
-            .background(Color(0xFFDADADF)),
+            .background(MaterialTheme.colorScheme.surface),
           contentAlignment = Alignment.Center
         ) {
           Icon(
@@ -405,7 +400,7 @@ private fun MotherboardItemCard(
           text = motherboard.brand.uppercase(),
           fontSize = 11.sp,
           fontWeight = FontWeight.Bold,
-          color = PrimaryAccent
+          color = MaterialTheme.colorScheme.primary
         )
         Text(
           text = motherboard.model,
