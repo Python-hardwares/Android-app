@@ -1,26 +1,20 @@
 package com.hardware.scanner.app.view.screen
 
 import android.content.Intent
-import android.net.Uri
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -29,16 +23,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Memory
-import androidx.compose.material.icons.filled.PowerSettingsNew
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -53,33 +40,32 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.hardware.scanner.app.model.entity.Cpu
 import com.hardware.scanner.app.model.entity.Factor
 
-private val DarkButton = Color(0xFF1C1B1F)
-private val PendingColor = Color(0xFF9A5B00)
-private val CardBackground = Color(0xFFF1F1F4)
+private const val NO_DATA_TEXT = "Não informado na base"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,16 +84,21 @@ fun MotherboardSpecsScreen(
       PreviewTopBar(
         onBackScreen = onBackScreen,
         onShare = {
+          fun formatShareValue(value: String?, unit: String? = null): String {
+            return if (value.isNullOrBlank() || value == "0") NO_DATA_TEXT
+            else if (unit != null) "$value $unit" else value
+          }
+
           val shareText = """
             📋 Especificações Técnicas - Placa-Mãe
 
-            • Marca: ${uiState.brand}
-            • Modelo: ${uiState.model}
-            • Socket: ${uiState.socket.ifBlank { "Não informado" }}
-            • Formato: ${uiState.formFactor.ifBlank { "Não informado" }}
-            • Cor: ${uiState.color.ifBlank { "Não informado" }}
-            • Memória Máxima: ${uiState.maxMemoryGb} GB (${uiState.memoryType.ifBlank { "DDR" }})
-            • Slots de Memória: ${uiState.memorySlots}
+            • Marca: ${formatShareValue(uiState.brand)}
+            • Modelo: ${formatShareValue(uiState.model)}
+            • Socket: ${formatShareValue(uiState.socket)}
+            • Formato: ${formatShareValue(uiState.formFactor)}
+            • Cor: ${formatShareValue(uiState.color)}
+            • Memória Máxima: ${formatShareValue(if (uiState.maxMemoryGb > 0) uiState.maxMemoryGb.toString() else null, "GB")} (${formatShareValue(uiState.memoryType)})
+            • Slots de Memória: ${formatShareValue(if (uiState.memorySlots > 0) uiState.memorySlots.toString() else null)}
 
             Enviado via Hardware Scanner App
           """.trimIndent()
@@ -135,8 +126,16 @@ fun MotherboardSpecsScreen(
         fontSize = 11.sp,
         color = MaterialTheme.colorScheme.onSurfaceVariant
       )
+
+      val titleText = remember(uiState.brand, uiState.model) {
+        listOf(uiState.brand, uiState.model)
+          .filter { it.isNotBlank() }
+          .joinToString(" ")
+          .ifBlank { "Placa-mãe sem identificação" }
+      }
+
       Text(
-        text = "${uiState.brand} ${uiState.model}",
+        text = titleText,
         fontSize = 22.sp,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onBackground
@@ -144,21 +143,48 @@ fun MotherboardSpecsScreen(
 
       Spacer(Modifier.height(16.dp))
 
-      AsyncImage(
-        model = uiState.imageUrl,
-        contentDescription = "Abrir imagem da placa-mãe",
-        contentScale = ContentScale.Fit,
-        modifier = Modifier
-          .size(200.dp)
-          .clip(RoundedCornerShape(12.dp))
-          .clickable(enabled = !uiState.imageUrl.isNullOrBlank()) {
-            showImageViewer = true
+      if (uiState.imageUrl.isNotBlank()) {
+        AsyncImage(
+          model = uiState.imageUrl,
+          contentDescription = "Imagem da placa-mãe",
+          contentScale = ContentScale.Fit,
+          modifier = Modifier
+            .size(200.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { showImageViewer = true }
+        )
+      } else {
+        Box(
+          modifier = Modifier
+            .size(width = 200.dp, height = 130.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+          contentAlignment = Alignment.Center
+        ) {
+          Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+          ) {
+            Icon(
+              imageVector = Icons.Default.Image,
+              contentDescription = null,
+              tint = MaterialTheme.colorScheme.onSurfaceVariant,
+              modifier = Modifier.size(32.dp)
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+              text = "Imagem não disponível na base",
+              fontSize = 12.sp,
+              color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
           }
-      )
+        }
+      }
 
       Spacer(Modifier.height(20.dp))
 
       SectionTitle("IDENTIFICAÇÃO")
+      SpecRow("Categoria", uiState.category.toCategoryLabel())
       SpecRow("Modelo", uiState.model)
       SpecRow("Fabricante", uiState.brand)
       SpecRow("Chipset", uiState.chipset)
@@ -171,39 +197,27 @@ fun MotherboardSpecsScreen(
       SectionTitle("MEMÓRIA")
       SpecRow("Canais de Comunicação", uiState.memoryChannels)
       SpecRow("Tipo de memória", uiState.memoryType)
-      SpecRow("Slots de memória", uiState.memorySlots.toString())
-      SpecRow("Memória máxima", uiState.maxMemoryGb.let { "$it GB" })
+      SpecRow("Slots de memória", uiState.memorySlots)
+      SpecRow("Memória máxima", uiState.maxMemoryGb, unit = "GB")
+      SpecRow("Velocidade padrão máxima", uiState.maxMemoryStandardMhz, unit = "MHz")
+      SpecRow("Velocidade máxima em overclock", uiState.maxMemoryOcMhz, unit = "MHz")
+
+      Spacer(Modifier.height(16.dp))
+
+      SectionTitle("PREÇO DE REFERÊNCIA")
+      val referencePrice = uiState.referencePriceAmount?.let { amount ->
+        val currency = uiState.referencePriceCurrency.toCurrencyLabel()
+        if (currency.isNotBlank()) "$currency $amount" else "$amount"
+      }
+      SpecRow("Valor", referencePrice)
+      SpecRow("Data", uiState.referencePriceDate)
+      SpecRow("Fonte", uiState.referencePriceSourceUrl)
 
       Spacer(Modifier.height(16.dp))
 
       SectionTitle("EXPANSÃO")
-      SpecRow("Slots SATA", uiState.sataSlots.toString())
-      SpecRow("Slots PCIe", uiState.pcieSlots.toString())
-
-      Spacer(Modifier.height(24.dp))
-
-      ActionButton(
-        text = "Baixar Datasheet",
-        icon = Icons.Default.Download,
-        onClick = {
-          if (uiState.datasheetUrl.isNotBlank()) {
-            try {
-              val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uiState.datasheetUrl)).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-              }
-              context.startActivity(intent)
-            } catch (e: Exception) {
-              Log.e("MotherboardSpecsScreen", "Erro ao abrir datasheet", e)
-            }
-          }
-        }
-      )
-      Spacer(Modifier.height(12.dp))
-      ActionButton(
-        text = "Lista de Processadores Suportados",
-        icon = Icons.Default.Memory,
-        onClick = { showCpuListSheet = true }
-      )
+      SpecRow("Slots SATA", uiState.sataSlots)
+      SpecRow("Slots PCIe", uiState.pcieSlots)
 
       Spacer(Modifier.height(24.dp))
     }
@@ -226,7 +240,7 @@ fun MotherboardSpecsScreen(
           fontWeight = FontWeight.Bold
         )
         Text(
-          text = "Socket: ${uiState.socket.ifBlank { "Não informado" }}",
+          text = "Socket: ${uiState.socket.ifBlank { NO_DATA_TEXT }}",
           fontSize = 18.sp,
           fontWeight = FontWeight.Bold,
           color = MaterialTheme.colorScheme.onSurface
@@ -267,7 +281,7 @@ private fun ImageViewerDialog(
   imageUrl: String?,
   onDismiss: () -> Unit
 ) {
-  var scale by remember { mutableStateOf(1f) }
+  var scale by remember { mutableFloatStateOf(1f) }
   var offset by remember { mutableStateOf(Offset.Zero) }
   val transformState = rememberTransformableState { zoomChange, panChange, _ ->
     scale = (scale * zoomChange).coerceIn(1f, 5f)
@@ -364,81 +378,6 @@ private fun PreviewTopBar(onBackScreen: () -> Unit, onShare: () -> Unit) {
   )
 }
 
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun ImageCard() {
-  Column(
-    modifier = Modifier
-      .fillMaxWidth()
-      .clip(RoundedCornerShape(20.dp))
-      .background(CardBackground)
-      .padding(12.dp)
-  ) {
-    Row(
-      modifier = Modifier.fillMaxWidth(),
-      horizontalArrangement = Arrangement.spacedBy(8.dp),
-      verticalAlignment = Alignment.CenterVertically
-    ) {
-      // TODO: trocar por AsyncImage (Coil) com a foto da placa
-      Box(
-        modifier = Modifier
-          .weight(1f)
-          .aspectRatio(1f)
-          .clip(RoundedCornerShape(12.dp))
-          .background(Color(0xFFDADADF)),
-        contentAlignment = Alignment.Center
-      ) {
-        Icon(Icons.Default.Image, contentDescription = null, tint = Color.Gray)
-      }
-      Box(
-        modifier = Modifier
-          .size(width = 56.dp, height = 56.dp)
-          .clip(RoundedCornerShape(8.dp))
-          .background(Color(0xFFDADADF)),
-        contentAlignment = Alignment.Center
-      ) {
-        Icon(Icons.Default.Image, contentDescription = null, tint = Color.Gray)
-      }
-    }
-
-    Spacer(Modifier.height(12.dp))
-
-    Text(
-      text = "DESTAQUES ILUSTRATIVOS · NÃO CONFIRMADOS",
-      fontSize = 9.sp,
-      color = Color.Gray
-    )
-
-    Spacer(Modifier.height(8.dp))
-
-    FlowRow(
-      horizontalArrangement = Arrangement.spacedBy(8.dp),
-      verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-      FeatureChip("Alto Desempenho", Icons.Default.Settings, Color(0xFFE08A00))
-      FeatureChip("Suporta Overclock", Icons.Default.Settings, Color(0xFFE08A00))
-      FeatureChip("mSATA", Icons.Default.Storage, Color(0xFF1E6FD9))
-      FeatureChip("Botão Power", Icons.Default.PowerSettingsNew, Color(0xFF2E9E4F))
-      FeatureChip("Display POST", Icons.Default.Settings, Color(0xFF8E3FC9))
-    }
-  }
-}
-
-@Composable
-private fun FeatureChip(text: String, icon: ImageVector, color: Color) {
-  Row(
-    modifier = Modifier
-      .clip(RoundedCornerShape(50))
-      .background(color.copy(alpha = 0.12f))
-      .padding(horizontal = 10.dp, vertical = 6.dp),
-    verticalAlignment = Alignment.CenterVertically
-  ) {
-    Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(12.dp))
-    Spacer(Modifier.width(4.dp))
-    Text(text, fontSize = 11.sp, color = color, fontWeight = FontWeight.Medium)
-  }
-}
-
 @Composable
 private fun SectionTitle(text: String) {
   Text(
@@ -453,7 +392,35 @@ private fun SectionTitle(text: String) {
 }
 
 @Composable
-private fun SpecRow(label: String, value: String?, pending: Boolean = false) {
+private fun SpecRow(
+  label: String,
+  value: Int,
+  unit: String? = null
+) {
+  SpecRow(
+    label = label,
+    value = if (value > 0) value.toString() else null,
+    unit = unit
+  )
+}
+
+@Composable
+private fun SpecRow(
+  label: String,
+  value: String?,
+  unit: String? = null
+) {
+  val isMissing = value.isNullOrBlank() ||
+      value.trim() == "0" ||
+      value.trim() == "Informação não informada" ||
+      value.trim() == "Não informado"
+
+  val displayValue = when {
+    isMissing -> NO_DATA_TEXT
+    unit != null && !value.endsWith(unit, ignoreCase = true) -> "$value $unit"
+    else -> value
+  }
+
   Row(
     modifier = Modifier
       .fillMaxWidth()
@@ -461,36 +428,48 @@ private fun SpecRow(label: String, value: String?, pending: Boolean = false) {
     horizontalArrangement = Arrangement.SpaceBetween,
     verticalAlignment = Alignment.CenterVertically
   ) {
-    Text(label, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    if (value != null) {
-      Text(
-        text = value,
-        fontSize = 13.sp,
-        fontWeight = if (pending || value != "DDR3") FontWeight.Bold else FontWeight.Normal,
-        color = if (pending) PendingColor else if (value == "DDR3") MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
-        textAlign = TextAlign.End
-      )
-    }
+    Text(
+      text = label,
+      fontSize = 13.sp,
+      color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+    Text(
+      text = displayValue,
+      fontSize = 13.sp,
+      fontWeight = if (isMissing) FontWeight.Normal else FontWeight.SemiBold,
+      fontStyle = if (isMissing) FontStyle.Italic else FontStyle.Normal,
+      color = if (isMissing) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface,
+      textAlign = TextAlign.End
+    )
   }
 }
 
-@Composable
-private fun ActionButton(text: String, icon: ImageVector, onClick: () -> Unit) {
-  Button(
-    onClick = onClick,
-    modifier = Modifier
-      .fillMaxWidth()
-      .height(52.dp),
-    shape = RoundedCornerShape(14.dp),
-    colors = ButtonDefaults.buttonColors(
-      containerColor = MaterialTheme.colorScheme.primary,
-      contentColor = MaterialTheme.colorScheme.onPrimary
-    )
-  ) {
-    Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
-    Spacer(Modifier.width(8.dp))
-    Text(text, fontWeight = FontWeight.SemiBold)
-  }
+private fun String?.toCategoryLabel(): String = when (this?.lowercase()?.trim()) {
+  "motherboard" -> "Placa-mãe"
+  null, "" -> ""
+  else -> this
+}
+
+private fun String?.toCurrencyLabel(): String = when (this?.uppercase()?.trim()) {
+  "USD" -> "US$"
+  "BRL" -> "R$"
+  "EUR" -> "€"
+  null, "" -> ""
+  else -> this
+}
+
+private fun String?.toPriceStatusLabel(): String = when (this?.lowercase()?.trim()) {
+  "reference_only" -> "Somente referência"
+  "market_price" -> "Preço de mercado"
+  null, "" -> ""
+  else -> this
+}
+
+private fun String?.toPriceContextLabel(): String = when (this?.lowercase()?.trim()) {
+  "historical_review" -> "Análise histórica"
+  "current_market" -> "Mercado atual"
+  null, "" -> ""
+  else -> this
 }
 
 @Composable
@@ -523,7 +502,10 @@ private fun CpuItemCard(cpu: Cpu) {
             .padding(horizontal = 8.dp, vertical = 2.dp)
         ) {
           Text(
-            text = cpu.factor.name,
+            text = when (cpu.factor) {
+              Factor.INTEL -> "Intel"
+              Factor.AMD -> "AMD"
+            },
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
             color = Color.White
@@ -538,7 +520,7 @@ private fun CpuItemCard(cpu: Cpu) {
         horizontalArrangement = Arrangement.spacedBy(16.dp)
       ) {
         Text(
-          text = "Socket: ${cpu.socket}",
+          text = "Socket: ${cpu.socket.ifBlank { NO_DATA_TEXT }}",
           fontSize = 12.sp,
           color = MaterialTheme.colorScheme.onSurfaceVariant
         )

@@ -21,6 +21,9 @@ import java.io.File
 @Serializable
 data class LookupRequest(val text: String)
 
+@Serializable
+private data class HealthResponse(val status: String)
+
 class ApiRepositoryImpl(
   private val httpClient: HttpClient,
   private val serverConfigStore: ServerConfigStore
@@ -31,8 +34,10 @@ class ApiRepositoryImpl(
   }
 
   override suspend fun checkConnection(serverUrl: String): Boolean {
-    val response = httpClient.get(normalizeUrl(serverUrl))
-    return response.status.value in 200..499
+    val response = httpClient.get("${normalizeUrl(serverUrl)}/health")
+    if (response.status.value !in 200..299) return false
+
+    return responseJson.decodeFromString<HealthResponse>(response.bodyAsText()).status == "ok"
   }
 
   override suspend fun searchMotherboardByPhoto(file: File): Scan {

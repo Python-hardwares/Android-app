@@ -28,7 +28,7 @@ fun NavGraphBuilder.cameraGraph(navController: NavController) {
 
   composable<Preview> {
     CameraScreen(
-      onBackScreen = { navController.popBackStack() },
+      onBackScreen = { navController.navigateBackToMenu() },
       onNavigateToSpecs = { motherboard ->
         navController.navigate(motherboard.toRoute()) {
           popUpTo<Preview> { inclusive = true }
@@ -38,6 +38,14 @@ fun NavGraphBuilder.cameraGraph(navController: NavController) {
   }
 
   composable<MotherboardSpecs> {
-    MotherboardSpecsScreen(onBackScreen = { navController.popBackStack() })
+    MotherboardSpecsScreen(onBackScreen = { navController.navigateBackToMenu() })
+  }
+}
+
+private fun NavController.navigateBackToMenu() {
+  if (!popBackStack()) {
+    navigate(Menu) {
+      launchSingleTop = true
+    }
   }
 }

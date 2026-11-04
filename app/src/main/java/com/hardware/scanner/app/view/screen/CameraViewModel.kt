@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hardware.scanner.app.model.entity.Motherboard
 import com.hardware.scanner.app.model.entity.ScanStatus
+import com.hardware.scanner.app.model.entity.isMotherboard
 import com.hardware.scanner.app.model.repositories.ApiRepository
 import com.hardware.scanner.app.services.PhotoService
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -111,7 +112,7 @@ class CameraViewModel @Inject constructor(
         val scan = repository.searchMotherboardByPhoto(file)
         Log.i("Upload", "Upload concluído: $scan")
 
-        val matchedMotherboard = scan.matches.firstOrNull()
+        val matchedMotherboard = scan.matches.firstOrNull(Motherboard::isMotherboard)
 
         if (matchedMotherboard != null && (scan.status == ScanStatus.MATCHED || scan.status == ScanStatus.SUGGESTIONS)) {
           _events.send(CameraEvent.NavigateToSpecs(matchedMotherboard))

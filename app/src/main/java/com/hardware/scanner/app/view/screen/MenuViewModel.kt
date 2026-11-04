@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.hardware.scanner.app.model.entity.Motherboard
 import com.hardware.scanner.app.model.entity.Scan
 import com.hardware.scanner.app.model.entity.ScanStatus
+import com.hardware.scanner.app.model.entity.isMotherboard
 import com.hardware.scanner.app.model.repositories.ApiRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
@@ -59,6 +60,7 @@ class MenuViewModel @Inject constructor(
       _uiState.update { it.copy(isLoading = true, isListing = false, options = emptyList()) }
       try {
         val scan: Scan = repository.searchMotherboardByName(name.trim())
+        val motherboardMatches = scan.matches.filter(Motherboard::isMotherboard)
 
         when (scan.status) {
           ScanStatus.NOT_FOUND -> {
@@ -73,23 +75,32 @@ class MenuViewModel @Inject constructor(
             Log.i(
               "PreviewViewModel", "Foram encontradas sugestões de placas-mãe."
             )
-            if (scan.matches.isEmpty()) {
+            if (motherboardMatches.isEmpty()) {
               _events.send(MenuEvent.ShowError("Nenhuma placa-mãe encontrada."))
             }
-            _uiState.update { it.copy(isLoading = false, isListing = scan.matches.isNotEmpty(), options = scan.matches) }
+            _uiState.update {
+              it.copy(
+                isLoading = false,
+                isListing = motherboardMatches.isNotEmpty(),
+                options = motherboardMatches
+              )
+            }
           }
 
           ScanStatus.MATCHED -> {
             Log.i(
-              "PreviewViewModel", "Placa-mãe correspondente encontrada com sucesso."
+              "PreviewViewModel", "Placa-mãe correspondente encontrada; exibindo resultado para seleção."
             )
-            val first = scan.matches.firstOrNull()
-            if (first != null) {
-              _events.send(MenuEvent.NavigateToSpecs(first))
-            } else {
+            if (motherboardMatches.isEmpty()) {
               _events.send(MenuEvent.ShowError("Nenhuma placa-mãe encontrada."))
             }
-            _uiState.update { it.copy(isLoading = false) }
+            _uiState.update {
+              it.copy(
+                isLoading = false,
+                isListing = motherboardMatches.isNotEmpty(),
+                options = motherboardMatches
+              )
+            }
           }
         }
       } catch (e: CancellationException) {
